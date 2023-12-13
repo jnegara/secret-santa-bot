@@ -1,28 +1,24 @@
-from secret_santa_lib.selector import Selector
-from secret_santa_lib.sms_client import SmsClient, from_config
+from secret_santa_lib.secret_santa_manager import SecretSantaManager
 
 
 if __name__ == '__main__':
     print('Ho ho ho! Let\'s assign some santas!')
     print()
 
-    client: SmsClient = from_config()
-    print(f'carrier options: {SmsClient.get_carriers()}')
-    print()
-
-    selector: Selector = Selector(client)
+    manager: SecretSantaManager = SecretSantaManager()
 
     add_santa: bool = True
     while add_santa:
         name: str = input('name: ')
-        phone_number: str = input('phone number: ')
-        carrier: str = input('carrier: ')
-        selector.add_santa(name, phone_number, carrier)
-        add_santa = input('Would you like to add another? (Y/n) ') == 'Y'
+        email: str = input('email address: ')
+        manager.add_participant(name, email)
         print()
 
-    print('Assigning and notifying santas...')
-    selector.select_and_notify_santas()
+        add_santa = 'Y' == input('Would you like to add another? (Y/n) ')
+        print()
+
+    print('assigning and notifying santas...')
+    manager.assign_and_notify_participants()
     print()
 
     print('All done!')
