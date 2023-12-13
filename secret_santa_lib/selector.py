@@ -1,32 +1,29 @@
 import random
 import re
 
-from secret_santa_lib.sms_client import SmsClient, from_config
+from secret_santa_lib.sms_client import SmsClient
 
 
 class Selector:
-    __RE_PHONE_NUMBER: str = '^\+[0-9]{11,12}$'
-    __CLIENT: SmsClient = from_config()
+    __RE_PHONE_NUMBER: str = '^[0-9]{10}$'
 
-    def __init__(self):
-        self.__santas: dict[str, str] = {}
+    def __init__(self, client: SmsClient):
+        self.__santas: dict[str, tuple[str, str]] = {}
+        self.__client = client
 
-    def add_santa(self, santa: str, phone_number: str) -> None:
+    def add_santa(self, santa: str, phone_number: str, carrier: str) -> None:
         if not re.match(Selector.__RE_PHONE_NUMBER, phone_number):
-            print('Invalid phone number.')
-            print('Must match pattern: +[country code][10 digit number]')
-            print('For example: +12222222222')
+            print(f'Invalid phone number: {phone_number}')
+            print('Expected 10 digit phone number, i.e. 0123456789')
             return
 
-        if santa in self.__santas:
-            print(f'{santa}, {self.__santas[name]} has already been registered as a santa.')
-            if phone_number == self.__santas[name]:
-                return
-            print(f'Updating phone number to {phone_number}')
-        else:
-            print(f'Added {santa}, {phone_number}')
+        if not SmsClient.is_valid_carrier(carrier):
+            print(f'invalid carrier: {carrier}')
+            print(f'options: {SmsClient.get_carriers()}')
+            return
 
-        self.__santas[santa] = phone_number
+        self.__santas[santa] = (phone_number, carrier)
+        print(f'Added {santa}, {phone_number}, {carrier}')
 
     def select_and_notify_santas(self) -> None:
         if len(self.__santas) < 2:
@@ -35,10 +32,13 @@ class Selector:
 
         remainder: list[str] = list(self.__santas.keys())
 
-        for santa, phone_number in self.__santas.items():
+        self.__client.start()
+        for santa, contact_info in self.__santas.items():
             target: str = random.choice(remainder)
             while target == santa:
                 target = random.choice(remainder)
-            Selector.__CLIENT.notify_santa(santa, phone_number, target)
+            phone_number, carrier = contact_info
+            self.__client.notify_santa(santa, phone_number, carrier, target)
             remainder.remove(target)
+        self.__client.stop()
 

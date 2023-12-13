@@ -7,7 +7,6 @@ setup(
    author='Jessica Negara',
    author_email='jessica.negara@gmail.com',
    packages = ['secret_santa_lib'],
-   install_requires=['twilio'],
-   scripts = [ 'scripts/run.py' ],
+   scripts = [ 'scripts/secret_santa.py' ],
 )
 
